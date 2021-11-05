@@ -38,8 +38,15 @@ The code has been tested on a computer having Ubuntu 16.04 and GPU is needed to 
 
 We provide a demo code for the usage of topoGAN for multiple target graphs prediction from a source graph. In main.py we train the model on a simulated dataset with 280 subjects and test it on 30 subjects. Each sample has 6 brain graphs (one source graph and five target graphs). In this example, we used three input arguments (i.e., num_domains, nb_clusters and mode), you can add hyper-parameters (e.g., lambda_topology, lambda_rec) and vary their default values. To train the model you nedd to add to the following command "--mode='train' and if you want to test it you need to add "--mode='test'"  
 
-```bash
+<!-- ```bash
 python main.py --num_domains=6 --nb_clusters=2 
+``` -->
+```bash
+train:
+python main.py --num_domains=2 --nb_clusters=1 --mode='train'
+
+test:
+python main.py --num_domains=2 --nb_clusters=1 --mode='test'
 ```
 
 # Input and output data
