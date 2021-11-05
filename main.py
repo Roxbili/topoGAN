@@ -34,10 +34,12 @@ Copyright 2021 Alaa Bessadok, Sousse University.
 Please cite the above paper if you use this code.
 All rights reserved.
 """
+import os
 import argparse
 import random
 import yaml
 import numpy as np
+import pandas as pd
 from torch.backends import cudnn
 from prediction import TopoGAN
 from data_loader import *
@@ -99,7 +101,7 @@ if __name__ == '__main__':
 
     # For fast training.
     cudnn.benchmark = True
-    
+
     if opts.mode == 'train':
         """
         Training topoGAN
@@ -160,20 +162,23 @@ if __name__ == '__main__':
                 tgt_loader = get_loader(target_feature, opts.batch_size, opts.num_workers)
                 tgt_loaders.append(tgt_loader)
 
-       # Test TopoGAN
+        # Test TopoGAN
         model = TopoGAN(src_loader, tgt_loaders, opts.nb_clusters, opts)
         predicted_target_graphs, source_graphs = model.test()
 
-      # Save data into csv files
+        # Save data into csv files
+        if os.path.exists('csv') == False:
+            os.mkdir('csv')
+
         print("saving source graphs into csv file...") 
-        f = source_graphs.numpy()
+        f = source_graphs.cpu().numpy()
         dataframe = pd.DataFrame(data=f.astype(float))
-        dataframe.to_csv('source_graphs.csv', sep=' ', header=True, float_format='%.6f', index=False)
+        dataframe.to_csv('csv/source_graphs.csv', sep=' ', header=True, float_format='%.6f', index=False)
 
         print("saving predicted target graphs into csv files...") 
         for idx in range(len(predicted_target_graphs)): 
-          f = predicted_target_graphs[idx].numpy()
-          dataframe = pd.DataFrame(data=f.astype(float))
-          dataframe.to_csv('predicted_graphs_%d.csv'%(idx+1), sep=' ', header=True, float_format='%.6f', index=False)
+            f = predicted_target_graphs[idx].numpy()
+            dataframe = pd.DataFrame(data=f.astype(float))
+            dataframe.to_csv('csv/predicted_graphs_%d.csv'%(idx+1), sep=' ', header=True, float_format='%.6f', index=False)
         
 

@@ -1,0 +1,5 @@
+.vscode
+.DS_Store
+result_TopoGAN
+csv
+__pycache__

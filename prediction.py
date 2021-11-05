@@ -79,6 +79,9 @@ class TopoGAN(object):
         if os.path.exists(D_path):
             self.D.load_state_dict(torch.load(D_path, map_location=lambda storage, loc: storage))
 
+    def learn_adj_device(self, x):
+        tensor = learn_adj(x)
+        return tensor.to(self.device)
 
     def reset_grad(self):
         """
@@ -180,7 +183,7 @@ class TopoGAN(object):
             #                             2. Train the discriminator                              #
             # =================================================================================== #
             
-            embedding = self.E(x_src,learn_adj(x_src)).detach()
+            embedding = self.E(x_src,self.learn_adj_device(x_src)).detach()
             ## Cluster the source graph embeddings using SIMLR
             simlr = SIMLR.SIMLR_LARGE(nb_clusters, embedding.shape[0]/2, 0)
             S, ff, val, ind = simlr.fit(embedding)
@@ -202,12 +205,12 @@ class TopoGAN(object):
                 cluster_index_list = get_indexes(par,y_pred)
                 print(cluster_index_list)
                 for idx in range(len(self.Gs)):
-                    x_fake_i = self.Gs[idx][par](embedding[cluster_index_list],learn_adj(x_tgts[idx][cluster_index_list])).detach()
+                    x_fake_i = self.Gs[idx][par](embedding[cluster_index_list],self.learn_adj_device(x_tgts[idx][cluster_index_list])).detach()
                     x_fake_list.append(x_fake_i)
                     x_src_list.append(x_src[cluster_index_list])
 
-                    out_fake_i, out_cls_fake_i = self.D(x_fake_i,learn_adj(x_fake_i))
-                    _, out_cls_real_i = self.D(x_tgts[idx][cluster_index_list],learn_adj(x_tgts[idx][cluster_index_list]))
+                    out_fake_i, out_cls_fake_i = self.D(x_fake_i,self.learn_adj_device(x_fake_i))
+                    _, out_cls_real_i = self.D(x_tgts[idx][cluster_index_list],self.learn_adj_device(x_tgts[idx][cluster_index_list]))
 
                     ### Graph domain classification loss
                     d_loss_cls_i = self.classification_loss(out_cls_real_i, label_pos[cluster_index_list], type=self.opts.cls_loss) \
@@ -217,7 +220,7 @@ class TopoGAN(object):
                     # Part of adversarial loss
                     d_loss_fake += torch.mean(out_fake_i)
 
-                out_src, out_cls_src = self.D(x_src[cluster_index_list],learn_adj(x_src[cluster_index_list]))
+                out_src, out_cls_src = self.D(x_src[cluster_index_list],self.learn_adj_device(x_src[cluster_index_list]))
                 ### Adversarial loss
                 d_loss_adv = torch.mean(out_src) - d_loss_fake / (self.opts.num_domains - 1)
 
@@ -228,7 +231,7 @@ class TopoGAN(object):
                 alpha = torch.rand(x_src_cat.size(0), 1).to(self.device)
                 x_hat = (alpha * x_src_cat.data + (1 - alpha) * x_fake_cat.data).requires_grad_(True)
 
-                out_hat, _ = self.D(x_hat,learn_adj(x_hat.detach()))
+                out_hat, _ = self.D(x_hat,self.learn_adj_device(x_hat.detach()))
                 d_loss_reg = self.gradient_penalty(out_hat, x_hat, self.opts.Lf)
 
                 # Cluster-based loss to update the discriminator
@@ -266,7 +269,7 @@ class TopoGAN(object):
                         # ========================= #
                         # =====source-to-target==== #
                         # ========================= #
-                        x_fake_i = self.Gs[idx][par](embedding[cluster_index_list],learn_adj(x_tgts[idx][cluster_index_list]))
+                        x_fake_i = self.Gs[idx][par](embedding[cluster_index_list],self.learn_adj_device(x_tgts[idx][cluster_index_list]))
                         
                         # Global topology loss
                         global_topology = self.criterionIdt(x_fake_i, x_tgts[idx][cluster_index_list])
@@ -281,10 +284,10 @@ class TopoGAN(object):
                         g_loss_topo += (local_topology + global_topology)
                         
                         if self.opts.lambda_idt > 0:
-                            x_fake_i_idt = self.Gs[idx][par](self.E(x_tgts[idx][cluster_index_list],learn_adj(x_tgts[idx][cluster_index_list])),learn_adj(x_tgts[idx][cluster_index_list]))
+                            x_fake_i_idt = self.Gs[idx][par](self.E(x_tgts[idx][cluster_index_list],self.learn_adj_device(x_tgts[idx][cluster_index_list])),self.learn_adj_device(x_tgts[idx][cluster_index_list]))
                             g_loss_idt += self.criterionIdt(x_fake_i_idt, x_tgts[idx][cluster_index_list])
 
-                        out_fake_i, out_cls_fake_i = self.D(x_fake_i,learn_adj(x_fake_i.detach()))
+                        out_fake_i, out_cls_fake_i = self.D(x_fake_i,self.learn_adj_device(x_fake_i.detach()))
 
                         ### Information maximization loss
                         g_loss_info_i = F.binary_cross_entropy_with_logits(out_cls_fake_i, label_pos[cluster_index_list])
@@ -380,13 +383,13 @@ class TopoGAN(object):
                 self.Gs[idx][par].eval()
 
         with torch.no_grad():
-            embedding = self.E(x_src,learn_adj(x_src))
+            embedding = self.E(x_src,self.learn_adj_device(x_src))
             predicted_target_graphs = []
             for idx in range(len(self.Gs)):
                 sum_cluster_pred_graph = 0
                 for par in range(self.opts.nb_clusters):
-                    x_fake_i = self.Gs[idx][par](embedding,learn_adj(x_src))
-                    sum_cluster_pred_graph = np.add(sum_cluster_pred_graph,x_fake_i)
+                    x_fake_i = self.Gs[idx][par](embedding,self.learn_adj_device(x_src))
+                    sum_cluster_pred_graph = np.add(sum_cluster_pred_graph,x_fake_i.cpu())
 
                 average_predicted_target_graph = sum_cluster_pred_graph / float(self.opts.nb_clusters)
                 predicted_target_graphs.append(average_predicted_target_graph)

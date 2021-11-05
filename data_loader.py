@@ -20,7 +20,7 @@ def get_loader(features, batch_size, num_workers=1):
 def learn_adj(x):
     y = []
     for t in x:
-            b = t.numpy()
+            b = t.cpu().numpy()
             y.append(b)
     
     x = np.array(y)

@@ -21,11 +21,17 @@ This work is published in Medical Image Analysis Journal 2021. topoGAN is a geom
 
 The code has been tested on a computer having Ubuntu 16.04 and GPU is needed to speed up the execution of the code. You also need to install dependencies:
 
-* [Python >= 3](https://www.python.org)
+<!-- * [Python >= 3](https://www.python.org)
 * [PyTorch 1.3.1](https://pytorch.org/)
 * [Numpy >= 1.8](https://numpy.org/)
 * [networkx >= 0.17](https://networkx.org/documentation/stable/install.html)
-* [SIMLR](https://github.com/bowang87/SIMLR_PY)
+* SIMLR: -->
+```bash
+  pip install -r requirements.txt
+
+  cd SIMLR_PY
+  pip install -e .
+```
 
 
 # Training and testing
