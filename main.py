@@ -167,8 +167,7 @@ if __name__ == '__main__':
         predicted_target_graphs, source_graphs = model.test()
 
         # Save data into csv files
-        if os.path.exists('csv') == False:
-            os.mkdir('csv')
+        create_dirs_if_not_exist(['csv'])
 
         print("saving source graphs into csv file...") 
         f = source_graphs.cpu().numpy()
