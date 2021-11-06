@@ -34,7 +34,7 @@ Copyright 2021 Alaa Bessadok, Sousse University.
 Please cite the above paper if you use this code.
 All rights reserved.
 """
-import os
+import os, sys
 import argparse
 import random
 import yaml
@@ -47,7 +47,10 @@ from data_loader import *
 parser = argparse.ArgumentParser()
 # initialisation
 # Basic opts.
-parser.add_argument('--num_domains', type=int, default=6, help='how many domains(including source domain)')
+parser.add_argument('--num_domains', type=int, default=2, help='how many domains(including source domain)')
+parser.add_argument('--num_subjects', type=int, default=300, help='how many subjects')
+parser.add_argument('--src_feature_len', type=int, default=1200, help='the length of the source feature')
+parser.add_argument('--tgt_feature_len', type=int, default=1200, help='the length of the target feature')
 parser.add_argument('--mode', type=str, default='train', choices=['train', 'test'])
 parser.add_argument('--log_dir', type=str, default='logs/')
 parser.add_argument('--checkpoint_dir', type=str, default='models/')
@@ -59,7 +62,7 @@ parser.add_argument('--result_root', type=str, default='result_TopoGAN/')
 parser.add_argument('--hidden1', type=int, default=32)
 parser.add_argument('--hidden2', type=int, default=16)
 parser.add_argument('--dropout', type=float, default=0.5)
-parser.add_argument('--in_feature', type=int, default=595)
+parser.add_argument('--in_feature', type=int, default=1200)
 
 # Discriminator model opts.
 parser.add_argument('--cls_loss', type=str, default='BCE', choices=['LS','BCE'], help='least square loss or binary cross entropy loss')
@@ -74,7 +77,7 @@ parser.add_argument('--lambda_topology', type=float, default=0.1, help='hyper-pa
 parser.add_argument('--nb_clusters', type=int, default=2, help='number of clusters for MKML clustering')
 
 # Training opts.
-parser.add_argument('--batch_size', type=int, default=70, help='mini-batch size')
+parser.add_argument('--batch_size', type=int, default=62, help='mini-batch size')
 parser.add_argument('--num_iters', type=int, default=10, help='number of total iterations for training D')
 parser.add_argument('--g_lr', type=float, default=0.0001, help='learning rate for G')
 parser.add_argument('--d_lr', type=float, default=0.0001, help='learning rate for D')
@@ -113,24 +116,32 @@ if __name__ == '__main__':
         with open(os.path.join(opts.result_root, 'opts.yaml'), 'w') as f:
             f.write(yaml.dump(vars(opts)))
 
-        # Simulate graph data for easy test the code
-        source_target_domains = []
-        for i in range(opts.num_domains):
-          source_target_domains.append(np.random.normal(random.random(), random.random(), (280,595)))
+        #################### data generate #####################
+        # # Simulate graph data for easy test the code
+        # source_target_domains = []
+        # for i in range(opts.num_domains):
+        #   source_target_domains.append(np.random.normal(random.random(), random.random(), (280,595)))
         
-        # Choose the source domain to be translated
-        src_domain = 0
+        # # Choose the source domain to be translated
+        # src_domain = 0
         
-        # Load source and target TRAIN datasets
-        tgt_loaders = []
-        for domain in range(0, opts.num_domains):
-            if domain == src_domain:
-                source_feature = source_target_domains[domain]
-                src_loader = get_loader(source_feature, opts.batch_size, opts.num_workers)
-            else:
-                target_feature = source_target_domains[domain]
-                tgt_loader = get_loader(target_feature, opts.batch_size, opts.num_workers)
-                tgt_loaders.append(tgt_loader)
+        # # Load source and target TRAIN datasets
+        # tgt_loaders = []
+        # for domain in range(0, opts.num_domains):
+        #     if domain == src_domain:
+        #         source_feature = source_target_domains[domain]
+        #         # print(source_feature.shape) # (70, 595)
+        #         src_loader = get_loader(source_feature, opts.batch_size, opts.num_workers)
+        #     else:
+        #         target_feature = source_target_domains[domain]
+        #         tgt_loader = get_loader(target_feature, opts.batch_size, opts.num_workers)
+        #         tgt_loaders.append(tgt_loader)
+
+        src_data = np.random.rand(opts.num_subjects * opts.batch_size, opts.src_feature_len)
+        src_loader = get_loader(src_data, opts.batch_size, opts.num_workers)
+        tgt_data = np.random.rand(opts.num_subjects * opts.batch_size, opts.tgt_feature_len)
+        tgt_loader = get_loader(tgt_data, opts.batch_size, opts.num_workers)
+        tgt_loaders = [tgt_loader]
 
         # Train TopoGAN
         model = TopoGAN(src_loader, tgt_loaders, opts.nb_clusters, opts)

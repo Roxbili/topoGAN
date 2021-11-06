@@ -43,10 +43,10 @@ python main.py --num_domains=6 --nb_clusters=2
 ``` -->
 ```bash
 train:
-python main.py --num_domains=2 --nb_clusters=1 --mode='train'
+python main.py --num_domains=2 --nb_clusters=2 --mode='train'
 
 test:
-python main.py --num_domains=2 --nb_clusters=1 --mode='test'
+python main.py --num_domains=2 --nb_clusters=2 --mode='test'
 ```
 
 # Input and output data

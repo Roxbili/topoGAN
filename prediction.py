@@ -1,4 +1,4 @@
-import os
+import os, sys
 import time
 import datetime
 import itertools
@@ -136,6 +136,7 @@ class TopoGAN(object):
         x_src_fixed= next(src_iter)
         x_src_fixed = x_src_fixed[0].to(self.device)
         d = next(iter(self.src_loader))
+        # print(d[0].shape)   # (70, 595)
         
         tgt_iters = []
         for loader in self.tgt_loaders:

@@ -2,7 +2,7 @@ import torch.utils.data as data_utils
 import numpy as np
 import torch
 import SIMLR
-import os
+import os, sys
 
 def get_loader(features, batch_size, num_workers=1):
     """
@@ -18,12 +18,19 @@ def get_loader(features, batch_size, num_workers=1):
     return loader
 
 def learn_adj(x):
-    y = []
-    for t in x:
-            b = t.cpu().numpy()
-            y.append(b)
+    '''
+        Args:
+            x: 2 dim array
+    '''
+    # print(x.shape)  # (70, 595)
+
+    # y = []
+    # for t in x:
+    #     b = t.cpu().numpy()
+    #     y.append(b)
+    # x = np.array(y)
+    x = x.cpu().numpy()
     
-    x = np.array(y)
     batchsize = x.shape[0]
     simlr = SIMLR.SIMLR_LARGE(1, batchsize/3, 0)
     adj, _,_, _ = simlr.fit(x)
@@ -35,8 +42,8 @@ def learn_adj(x):
 def to_tensor(x):
     y = []
     for t in x:
-            b = t.numpy()
-            y.append(b)
+        b = t.cpu().numpy()
+        y.append(b)
     
     x = np.array(y)
     x = x[0]
